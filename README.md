@@ -30,3 +30,8 @@ Philosopher 4 is born
 [4] is eating
 ...
 </pre>
+
+# Caution
+
+This project is not production ready at all and has not been tested.
+The API may change at each commit.
