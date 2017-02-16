@@ -1,3 +1,12 @@
+[![GoDoc][1]][2]
+[![GoCard][3]][4]
+
+[1]: https://godoc.org/github.com/ditrit/go-linda?status.svg
+[2]: https://godoc.org/github.com/ditrit/go-linda
+[3]: https://goreportcard.com/badge/ditrit/go-linda
+[4]: https://goreportcard.com/report/github.com/ditrit/go-linda
+
+
 This is a trivial and incomplete implementation of the linda language.
 
 The purpose is to implement the dinner of the philosopher as described in page 451 of the document [Linda in Context](http://www.inf.ed.ac.uk/teaching/courses/ppls/linda.pdf) from Nicholas Carriero and David Gelernter.
