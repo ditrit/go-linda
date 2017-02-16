@@ -11,6 +11,8 @@ This is a trivial and incomplete implementation of the linda language.
 
 The purpose is to implement the dinner of the philosopher as described in page 451 of the document [Linda in Context](http://www.inf.ed.ac.uk/teaching/courses/ppls/linda.pdf) from Nicholas Carriero and David Gelernter.
 
+More info [here](https://blog.owulveryck.info/2017/02/03/linda-31yo-with-5-starving-philosophers.../index.html)
+
 # Running the example
 
 `go get -v github.com/owulveryck/go-linda`
