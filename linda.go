@@ -49,8 +49,9 @@ func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 	go func() {
 		fn := args[0].(*zygo.SexpFunction)
 		expr, _ := env.Apply(fn, args[1:]) // Put the result in the tuplespace
-		l.Output <- expr
-
+		if expr != zygo.SexpNull {
+			l.Output <- expr
+		}
 	}()
 	return zygo.SexpNull, nil
 }
