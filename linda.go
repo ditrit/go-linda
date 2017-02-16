@@ -1,58 +1,58 @@
 package linda
 
 import (
+	"github.com/coreos/etcd/clientv3"
+	zygo "github.com/glycerine/zygomys/repl"
 	"reflect"
 )
 
 // Linda holds the communication channels that allows to get and put tuples in the Linda
 type Linda struct {
-	Input  <-chan interface{}
-	Output chan<- interface{}
+	cli    *clientv3.Client
+	Input  <-chan zygo.Sexp
+	Output chan<- zygo.Sexp
 }
 
-// Tuple shoud be a flat structure composed of first class citizens
-type Tuple interface{}
-
-// In method extracts a tuple from the tuple space. It finds a tuple that "matches" the object passed as a parameter
+// InRd method extracts a tuple from the tuple space. It finds a tuple that "matches" the object passed as a parameter
 // The parameter must be a pointer so the value will be overwritten
 // the function blocks until a value is present in the tuple space
 // If a template matches a tuple then any formals in the template are
 // assigned values from the the tuple.
-func (l *Linda) In(m Tuple) {
+// The function checks its name.
+// if name is "in" tuple is removed, if it is "rd" it does not remove the tuple
+func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
+	m := zygo.MakeList(args)
 	for t := range l.Input {
 		if match(m, t) {
-			// Assign t to m
-			m = t
-			return
+			if name == "rd" {
+				l.Output <- m
+			}
+			return m, nil
 		}
 		// Not for me, put the tuple back
 		l.Output <- m
 	}
-}
-
-// Rd is similar to In, except that it does not remove the matched tuple from the tuple space.
-// it leaves it unchanged in the tuple space.
-func (l *Linda) Rd(t Tuple) {
+	return zygo.SexpNull, nil
 }
 
 // Out operator inserl a tuple into the tuple space.
-func (l *Linda) Out(t Tuple) {
-	l.Output <- t
+func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
+	l.Output <- zygo.MakeList(args)
+	return zygo.SexpNull, nil
 }
 
-// Eval is similar to Out except it launches any function in the struct
+// Eval is similar to Out except it launcheS any function in the struct
 // within a goroutine
 // TODO: For now eval is only used as a wrapper to launch a goroutine
-func (l *Linda) Eval(fns []interface{}) {
-	// The first argument of eval should be the function
-	if reflect.ValueOf(fns[0]).Kind() == reflect.Func {
-		fn := reflect.ValueOf(fns[0])
-		var args []reflect.Value
-		for i := 1; i < len(fns); i++ {
-			args = append(args, reflect.ValueOf(fns[i]))
-		}
-		go fn.Call(args)
-	}
+func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
+	// The first element of the args should be a SexpFunction
+	go func() {
+		fn := args[0].(*zygo.SexpFunction)
+		expr, _ := env.Apply(fn, args[1:]) // Put the result in the tuplespace
+		l.Output <- expr
+
+	}()
+	return zygo.SexpNull, nil
 }
 
 // match compares a template m and a tuple t and returns true if:
