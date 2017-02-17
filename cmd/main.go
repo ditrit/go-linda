@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ditrit/go-linda"
 	zygo "github.com/glycerine/zygomys/repl"
+	"log"
 	"os"
 )
 
@@ -21,6 +22,11 @@ func main() {
 	if err == flag.ErrHelp {
 		usage(cfg.Flags)
 	}
+	f, err := os.Open(os.Args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
 
 	if err != nil {
 		panic(err)
@@ -30,10 +36,17 @@ func main() {
 		fmt.Fprintf(os.Stderr, "zygo command line error: '%v'\n", err)
 		usage(cfg.Flags)
 	}
-	lda := linda.Linda{}
+	lda := linda.New(nil)
 	env := zygo.NewGlisp()
 	env.AddFunction("in", lda.InRd)
 	env.AddFunction("rd", lda.InRd)
+	env.AddFunction("out", lda.Out)
 	env.AddFunction("eval", lda.Eval)
-	zygo.Repl(env, cfg)
+	env.SourceFile(f)
+	_, err = env.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//zygo.Repl(env, cfg)
 }

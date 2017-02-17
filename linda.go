@@ -4,12 +4,13 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	zygo "github.com/glycerine/zygomys/repl"
 	"github.com/google/uuid"
+	"log"
 )
 
 // New creates a new Linda instance
 func New(cli *clientv3.Client) *Linda {
-	input := make(chan zygo.Sexp, 10)
-	output := make(chan zygo.Sexp, 10)
+	input := make(chan *zygo.Sexp, 10)
+	output := make(chan *zygo.Sexp, 10)
 	go func() {
 		for i := range output {
 			input <- i
@@ -27,8 +28,8 @@ func New(cli *clientv3.Client) *Linda {
 type Linda struct {
 	id     uuid.UUID
 	cli    *clientv3.Client
-	input  <-chan zygo.Sexp
-	output chan<- zygo.Sexp
+	input  <-chan *zygo.Sexp
+	output chan<- *zygo.Sexp
 }
 
 // InRd method extracts a tuple from the tuple space. It finds a tuple that "matches" the object passed as a parameter
@@ -41,21 +42,22 @@ type Linda struct {
 func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
 	m := zygo.MakeList(args)
 	for t := range l.input {
-		if match(m, t) {
+		if match(m, *t) {
 			if name == "rd" {
-				l.output <- m
+				l.output <- &m
 			}
 			return m, nil
 		}
 		// Not for me, put the tuple back
-		l.output <- m
+		l.output <- &m
 	}
 	return zygo.SexpNull, nil
 }
 
 // Out operator inserl a tuple into the tuple space.
 func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
-	l.output <- zygo.MakeList(args)
+	lst := zygo.MakeList(args)
+	l.output <- &lst
 	return zygo.SexpNull, nil
 }
 
@@ -63,12 +65,17 @@ func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, 
 // within a goroutine
 // TODO: For now eval is only used as a wrapper to launch a goroutine
 func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
+	log.Println("[Eval] Evaluating ", args)
 	// The first element of the args should be a SexpFunction
 	go func() {
+		log.Println("[Eval] Triggered in a goroutine")
 		fn := args[0].(*zygo.SexpFunction)
-		expr, _ := env.Apply(fn, args[1:]) // Put the result in the tuplespace
+		expr, err := env.Apply(fn, args[1:]) // Put the result in the tuplespace
+		if err != nil {
+			log.Fatal(err)
+		}
 		if expr != zygo.SexpNull {
-			l.output <- expr
+			l.output <- &expr
 		}
 	}()
 	return zygo.SexpNull, nil

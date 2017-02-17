@@ -2,6 +2,7 @@
 (defn eat [i] (printf "%v is eating\n" i))
 
 (defn phil [i num] (
+    (printf "Welcome %v\n", i)
     (think i)
     (in "room ticket")
     (in "chopstick" i)
