@@ -47,6 +47,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	done := make(chan bool)
+	<-done
 	//zygo.Repl(env, cfg)
 }

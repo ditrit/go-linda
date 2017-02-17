@@ -2,7 +2,7 @@
 (defn eat [i] (printf "%v is eating\n" i))
 
 (defn phil [i num] (
-    (printf "Welcome %v\n", i)
+    (printf "Welcome %v\n" i)
     (think i)
     (in "room ticket")
     (in "chopstick" i)
@@ -10,8 +10,8 @@
     (eat i)
     (out "chopstick" i)
     (out "chopstick" (mod (+ i 1) num))
-    (out "room ticket")i
-    (phil i num)))
+    (out "room ticket")
+))
 
 (def num 5)
 (for [(def i 0) (< i num) (def i (+ 1 i))] 

@@ -65,10 +65,8 @@ func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, 
 // within a goroutine
 // TODO: For now eval is only used as a wrapper to launch a goroutine
 func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
-	log.Println("[Eval] Evaluating ", args)
 	// The first element of the args should be a SexpFunction
 	go func() {
-		log.Println("[Eval] Triggered in a goroutine")
 		fn := args[0].(*zygo.SexpFunction)
 		expr, err := env.Apply(fn, args[1:]) // Put the result in the tuplespace
 		if err != nil {
