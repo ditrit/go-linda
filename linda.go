@@ -4,7 +4,6 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	zygo "github.com/glycerine/zygomys/repl"
 	"github.com/google/uuid"
-	"reflect"
 )
 
 // New creates a new Linda instance
@@ -83,6 +82,6 @@ func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 //      - If both Fm and Ft are actuals with "equal" values
 //      - TODO: If Fm is a formal and Ft an actual
 //      - TODO: If Ft is a formal and Fm an actual
-func match(m, t interface{}) bool {
-	return reflect.DeepEqual(m, t)
+func match(m, t zygo.Sexp) bool {
+	return m.SexpString(&zygo.PrintState{}) == t.SexpString(&zygo.PrintState{})
 }
