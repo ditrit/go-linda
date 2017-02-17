@@ -11,13 +11,16 @@ This is a trivial and incomplete implementation of the linda language.
 
 The purpose is to implement the dinner of the philosopher as described in page 451 of the document [Linda in Context](http://www.inf.ed.ac.uk/teaching/courses/ppls/linda.pdf) from Nicholas Carriero and David Gelernter.
 
-More info [here](https://blog.owulveryck.info/2017/02/03/linda-31yo-with-5-starving-philosophers.../index.html)
 
-# Running the example
+# v0.1
 
-`go get -v github.com/owulveryck/go-linda`
+For more information about the v0.1, please refer to this [blog post](https://blog.owulveryck.info/2017/02/03/linda-31yo-with-5-starving-philosophers.../index.html)
 
-`cd $GOPATH/src/github.com/owulveryck/go-linda/example/dinner && go run *.go`
+## Running the example
+
+`go get -v github.com/dirtir/go-linda`
+
+`cd $GOPATH/src/github.com/ditrit/go-linda/example/dinner && go run *.go`
 
 <pre>
 Philosopher 1 is born
