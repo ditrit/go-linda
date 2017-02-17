@@ -3,11 +3,21 @@ package linda
 import (
 	"github.com/coreos/etcd/clientv3"
 	zygo "github.com/glycerine/zygomys/repl"
+	"github.com/google/uuid"
 	"reflect"
 )
 
+// New creates a new Linda instance
+func New(cli *clientv3.Client) *Linda {
+	return &Linda{
+		id:  uuid.New(),
+		cli: cli,
+	}
+}
+
 // Linda holds the communication channels that allows to get and put tuples in the Linda
 type Linda struct {
+	id     uuid.UUID
 	cli    *clientv3.Client
 	Input  <-chan zygo.Sexp
 	Output chan<- zygo.Sexp
