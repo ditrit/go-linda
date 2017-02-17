@@ -14,10 +14,14 @@
 
 (def num 5)
 (for [(def i 0) (< i num) (def i (+ 1 i))] 
+    (printf "Creating chopstick %v\n" i)
     (out "chopstick" i)
+    (printf "Creating philosopher %v\n" i)
     (eval phil i num)
     (cond
-        (< i (- num 1)) (out "room ticket")
+        (< i (- num 1)) (
+            (printf "Creating room ticker\n")
+            (out "room ticket"))
         null)
 )
 
