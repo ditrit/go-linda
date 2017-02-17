@@ -20,7 +20,7 @@
     (eval phil i num)
     (cond
         (< i (- num 1)) (
-            (printf "Creating room ticker\n")
+            (printf "Creating room ticket\n")
             (out "room ticket"))
         null)
 )
