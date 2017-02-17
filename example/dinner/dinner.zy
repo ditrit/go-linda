@@ -1,0 +1,23 @@
+(defn think [i] (printf "%v is thinking\n" i))
+(defn eat [i] (printf "%v is eating\n" i))
+
+(defn phil [i num] (
+    (think i)
+    (in "room ticket")
+    (in "chopstick" i)
+    (in "chopstick" (mod (+ i 1) num))
+    (eat i)
+    (out "chopstick" i)
+    (out "chopstick" (mod (+ i 1) num))
+    (out "room ticket")i
+    (phil i num)))
+
+(def num 5)
+(for [(def i 0) (< i num) (def i (+ 1 i))] 
+    (out "chopstick" i)
+    (eval phil i num)
+    (cond
+        (< i (- num 1)) (out "room ticket")
+        null)
+)
+
