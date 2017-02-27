@@ -1,26 +1,35 @@
 (defn think [i] (printf "%v is thinking\n" i))
-(defn eat [i] (printf "%v is eating\n" i))
+(defn eat [i] (
+  (in "chopstick" i)
+  (printf "%v took fork %v\n" i i)
+  (in "chopstick" (mod (+ i 1) num))
+  (printf "%v took fork %v\n" i (mod (+ i 1) num))
+  (printf "%v is eating\n" i)
+  (out "chopstick" i)
+  (printf "%v released fork %v\n" i i)
+  (out "chopstick" (mod (+ i 1) num))
+  (printf "%v released fork %v\n" i (mod (+ i 1) num))
+))
 
 (defn phil [i num] (
-    (printf "Welcome %v\n" i)
-    (think i)
-    (in "room ticket")
-    (in "chopstick" i)
-    (in "chopstick" (mod (+ i 1) num))
-    (eat i)
-    (out "chopstick" i)
-    (out "chopstick" (mod (+ i 1) num))
-    (out "room ticket")))
+  (think i)
+  (in "room ticket")
+  (eat i)
+  (out "room ticket"))
+  (phil i num)
+)
+
+
 
 (def num 5)
 (for [(def i 0) (< i num) (def i (+ 1 i))] 
-    (printf "Creating chopstick %v\n" i)
-    (out "chopstick" i)
-    (printf "Creating philosopher %v\n" i)
-    (eval phil i num)
-    (cond
-        (< i (- num 1)) 
-            (out "room ticket")
+  (printf "Creating chopstick %v\n" i)
+  (out "chopstick" i)
+  (printf "Creating philosopher %v\n" i)
+  (eval phil i num)
+  (cond
+    (< i (- num 1)) 
+      (out "room ticket")
         null)
 )
 

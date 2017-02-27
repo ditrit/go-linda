@@ -4,7 +4,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	zygo "github.com/glycerine/zygomys/repl"
 	"github.com/google/uuid"
-	"log"
+	//"log"
 )
 
 // New creates a new Linda instance
@@ -40,14 +40,14 @@ type Linda struct {
 // The function checks its name.
 // if name is "in" tuple is removed, if it is "rd" it does not remove the tuple
 func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
-	log.Println("[InRd]", &args)
+	//log.Println("[InRd]", &args)
 	m := zygo.MakeList(args)
 	for t := range l.input {
 		if match(m, *t) {
 			if name == "rd" {
 				l.output <- &m
 			}
-			log.Println("[InRd] Matched!")
+			//log.Println("[InRd] Matched!")
 			return m, nil
 		}
 		// Not for me, put the tuple back
@@ -58,7 +58,7 @@ func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 
 // Out operator inserl a tuple into the tuple space.
 func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
-	log.Println("[Out]", &args)
+	//log.Println("[Out]", &args)
 	lst := zygo.MakeList(args)
 	l.output <- &lst
 	return zygo.SexpNull, nil
@@ -68,20 +68,20 @@ func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, 
 // within a goroutine
 // TODO: For now eval is only used as a wrapper to launch a goroutine
 func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
-	log.Println("[Eval]", args)
+	//log.Println("[Eval]", args)
 	// The first element of the args should be a SexpFunction
 	fn := args[0].(*zygo.SexpFunction)
 	go func(env *zygo.Glisp, fn *zygo.SexpFunction, args []zygo.Sexp) {
 		//_, err := env.Apply(fn, args[:]) // Put the result in the tuplespace
 		expr, err := env.Apply(fn, args[:]) // Put the result in the tuplespace
 		if err != nil {
-			log.Fatal(err)
+			//log.Fatal(err)
 		}
 		if expr != zygo.SexpNull {
 			l.output <- &expr
 		}
 	}(env.Clone(), fn, args[1:])
-	log.Println("[/Eval]", args)
+	//log.Println("[/Eval]", args)
 	return zygo.SexpNull, nil
 }
 
@@ -94,6 +94,6 @@ func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 //      - TODO: If Fm is a formal and Ft an actual
 //      - TODO: If Ft is a formal and Fm an actual
 func match(m, t zygo.Sexp) bool {
-	log.Printf("[match] %v,%v", m.SexpString(&zygo.PrintState{}), t.SexpString(&zygo.PrintState{}))
+	//log.Printf("[match] %v,%v", m.SexpString(&zygo.PrintState{}), t.SexpString(&zygo.PrintState{}))
 	return m.SexpString(&zygo.PrintState{}) == t.SexpString(&zygo.PrintState{})
 }
