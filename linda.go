@@ -4,7 +4,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	zygo "github.com/glycerine/zygomys/repl"
 	"github.com/google/uuid"
-	//"log"
+	"log"
 )
 
 // New creates a new Linda instance
@@ -47,7 +47,9 @@ func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 			if name == "rd" {
 				l.output <- &m
 			}
-			//log.Println("[InRd] Matched!")
+			if len(args) >= 2 {
+				log.Printf("[InRd] Matched! %v %v", args[0].SexpString(&zygo.PrintState{}), args[1].SexpString(&zygo.PrintState{}))
+			}
 			return m, nil
 		}
 		// Not for me, put the tuple back

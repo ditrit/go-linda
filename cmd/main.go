@@ -6,13 +6,21 @@ import (
 	"github.com/ditrit/go-linda"
 	zygo "github.com/glycerine/zygomys/repl"
 	"log"
+	"math/rand"
 	"os"
+	"time"
 )
 
 func usage(myflags *flag.FlagSet) {
 	fmt.Printf("zygo command line help:\n")
 	myflags.PrintDefaults()
 	os.Exit(1)
+}
+
+func sleep(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
+	t := args[0].(*zygo.SexpInt)
+	time.Sleep(time.Duration(rand.Int31n(int32(t.Val))) * time.Millisecond)
+	return zygo.SexpNull, nil
 }
 
 func main() {
@@ -42,6 +50,7 @@ func main() {
 	env.AddFunction("rd", lda.InRd)
 	env.AddFunction("out", lda.Out)
 	env.AddFunction("eval", lda.Eval)
+	env.AddFunction("sleep", sleep)
 	env.SourceFile(f)
 	_, err = env.Run()
 	if err != nil {

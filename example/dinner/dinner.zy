@@ -1,35 +1,51 @@
-(defn think [i] (printf "%v is thinking\n" i))
-(defn eat [i] (
-  (in "chopstick" i)
-  (printf "%v took fork %v\n" i i)
-  (in "chopstick" (mod (+ i 1) num))
-  (printf "%v took fork %v\n" i (mod (+ i 1) num))
-  (printf "%v is eating\n" i)
-  (out "chopstick" i)
-  (printf "%v released fork %v\n" i i)
-  (out "chopstick" (mod (+ i 1) num))
-  (printf "%v released fork %v\n" i (mod (+ i 1) num))
+(defn think [i] (begin
+                  (printf "%v is thinking\n" i)
+                  (sleep 2000)
+                  (printf "/%v is thinking\n" i)
+                 )
+)
+(defn eat [i] (begin
+                  (printf "%v is eating\n" i)
+                  (sleep 2000)
+                  (printf "/%v is eating\n" i)
+                 )
+)
+
+
+ (defn phil [i num] (
+                     (begin
+                      (think i)
+                      (in "room ticket")
+                      (printf "%v is in the room\n" i)
+                      (in "chopstick" i)
+                      (printf "%v took the %v's chopstick\n" i i)
+                      (in "chopstick" (mod (+ i 1) num))
+                      (printf "%v took the %v's chopstick\n" i (mod (+ i 1) num))
+                      (eat i)
+                      (printf "%v released the %v's chopstick\n" i i)
+                      (out "chopstick" i)
+                      (printf "%v released the %v's chopstick\n" i (mod (+ i 1) num))
+                      (out "chopstick" (mod (+ i 1) num))
+                      (printf "%v left the room\n" i)
+                      (out "room ticket")
+                      (phil i num)
+                     )
 ))
 
-(defn phil [i num] (
-  (think i)
-  (in "room ticket")
-  (eat i)
-  (out "room ticket"))
-  (phil i num)
-)
-
-
-
 (def num 5)
-(for [(def i 0) (< i num) (def i (+ 1 i))] 
-  (printf "Creating chopstick %v\n" i)
-  (out "chopstick" i)
-  (printf "Creating philosopher %v\n" i)
-  (eval phil i num)
-  (cond
-    (< i (- num 1)) 
+  (for [(def i 0) (< i num) (def i (+ 1 i))] 
+   (begin
+    (printf "Creating chopstick %v\n" i)
+    (out "chopstick" i)
+    (printf "Creating philosopher %v\n" i)
+    (eval phil i num)
+    (cond
+     (< i (- num 1)) 
+     (begin
+      (printf "Creating room ticket\n")
       (out "room ticket")
-        null)
-)
+     )
+     null)
+   )
+  )
 
