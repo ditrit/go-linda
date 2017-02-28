@@ -1,35 +1,28 @@
 package linda
 
 import (
+	"context"
+	"fmt"
 	"github.com/coreos/etcd/clientv3"
 	zygo "github.com/glycerine/zygomys/repl"
 	"github.com/google/uuid"
 	"log"
 )
 
+const prefix = "LINDA"
+
 // New creates a new Linda instance
 func New(cli *clientv3.Client) *Linda {
-	input := make(chan *zygo.Sexp, 10)
-	output := make(chan *zygo.Sexp, 10)
-	go func() {
-		for i := range output {
-			input <- i
-		}
-	}()
 	return &Linda{
-		id:     uuid.New(),
-		cli:    cli,
-		input:  input,
-		output: output,
+		id:  uuid.New(),
+		cli: cli,
 	}
 }
 
 // Linda holds the communication channels that allows to get and put tuples in the Linda
 type Linda struct {
-	id     uuid.UUID
-	cli    *clientv3.Client
-	input  <-chan *zygo.Sexp
-	output chan<- *zygo.Sexp
+	id  uuid.UUID
+	cli *clientv3.Client
 }
 
 // InRd method extracts a tuple from the tuple space. It finds a tuple that "matches" the object passed as a parameter
@@ -40,50 +33,60 @@ type Linda struct {
 // The function checks its name.
 // if name is "in" tuple is removed, if it is "rd" it does not remove the tuple
 func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
-	//log.Println("[InRd]", &args)
 	m := zygo.MakeList(args)
-	for t := range l.input {
-		if match(m, *t) {
-			if name == "rd" {
-				l.output <- &m
-			}
-			if len(args) >= 2 {
-				log.Printf("[InRd] Matched! %v %v", args[0].SexpString(&zygo.PrintState{}), args[1].SexpString(&zygo.PrintState{}))
-			}
-			return m, nil
+	// Try to see if the tuple already exists in the tuplespace
+	resp, err := l.cli.Get(context.TODO(), prefix, clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortDescend))
+	if err != nil {
+		return zygo.SexpNull, err
+	}
+	for _, ev := range resp.Kvs {
+		if match(m, string(ev.Value)) {
+			fmt.Printf("%q : %q\n", ev.Key, ev.Value)
+			// TODO: Remove the tuple from the space is IN is called
+			return zygo.SexpNull, nil
 		}
-		// Not for me, put the tuple back
-		l.output <- &m
+	}
+	// The tuple does not exists, watch for a new event until a tuple match
+	rch := l.cli.Watch(context.Background(), prefix, clientv3.WithPrefix())
+	for wresp := range rch {
+		for _, ev := range wresp.Events {
+			// TODO: Check if ev.Type is PUT otherwise continue
+			if match(m, string(ev.Kv.Value)) {
+				fmt.Printf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
+				// TODO: Remove the tuple from the space is IN is called
+				return zygo.SexpNull, nil
+			}
+		}
 	}
 	return zygo.SexpNull, nil
 }
 
 // Out operator inserl a tuple into the tuple space.
 func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
-	//log.Println("[Out]", &args)
 	lst := zygo.MakeList(args)
-	l.output <- &lst
-	return zygo.SexpNull, nil
+	_, err := l.cli.Put(context.TODO(), prefix+"-"+l.id.String()+"-"+uuid.New().String(), lst.SexpString(&zygo.PrintState{}))
+	return zygo.SexpNull, err
 }
 
 // Eval is similar to Out except it launcheS any function in the struct
 // within a goroutine
 // TODO: For now eval is only used as a wrapper to launch a goroutine
 func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
-	//log.Println("[Eval]", args)
 	// The first element of the args should be a SexpFunction
 	fn := args[0].(*zygo.SexpFunction)
-	go func(env *zygo.Glisp, fn *zygo.SexpFunction, args []zygo.Sexp) {
+	go func(env *zygo.Glisp, fn *zygo.SexpFunction, args []zygo.Sexp) error {
 		//_, err := env.Apply(fn, args[:]) // Put the result in the tuplespace
 		expr, err := env.Apply(fn, args[:]) // Put the result in the tuplespace
 		if err != nil {
-			//log.Fatal(err)
+			// TODO
+			log.Println(err)
 		}
 		if expr != zygo.SexpNull {
-			l.output <- &expr
+			_, err := l.cli.Put(context.TODO(), prefix+"-"+l.id.String()+"-"+uuid.New().String(), expr.SexpString(&zygo.PrintState{}))
+			return err
 		}
+		return nil
 	}(env.Clone(), fn, args[1:])
-	//log.Println("[/Eval]", args)
 	return zygo.SexpNull, nil
 }
 
@@ -95,7 +98,6 @@ func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 //      - If both Fm and Ft are actuals with "equal" values
 //      - TODO: If Fm is a formal and Ft an actual
 //      - TODO: If Ft is a formal and Fm an actual
-func match(m, t zygo.Sexp) bool {
-	//log.Printf("[match] %v,%v", m.SexpString(&zygo.PrintState{}), t.SexpString(&zygo.PrintState{}))
-	return m.SexpString(&zygo.PrintState{}) == t.SexpString(&zygo.PrintState{})
+func match(m zygo.Sexp, t string) bool {
+	return m.SexpString(&zygo.PrintState{}) == t
 }

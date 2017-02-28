@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/ditrit/go-linda"
 	zygo "github.com/glycerine/zygomys/repl"
 	"log"
@@ -44,7 +45,15 @@ func main() {
 		fmt.Fprintf(os.Stderr, "zygo command line error: '%v'\n", err)
 		usage(cfg.Flags)
 	}
-	lda := linda.New(nil)
+	cli, err := clientv3.New(clientv3.Config{
+		Endpoints:   []string{"localhost:2379", "localhost:22379", "localhost:32379"},
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		// handle error!
+	}
+	defer cli.Close()
+	lda := linda.New(cli)
 	env := zygo.NewGlisp()
 	env.AddFunction("in", lda.InRd)
 	env.AddFunction("rd", lda.InRd)
