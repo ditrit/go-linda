@@ -41,9 +41,14 @@ func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 	}
 	for _, ev := range resp.Kvs {
 		if match(m, string(ev.Value)) {
+			// delete the keys
+			_, err := l.cli.Delete(context.TODO(), string(ev.Key), clientv3.WithPrefix())
+			if err != nil {
+				return zygo.SexpNull, err
+			}
 			fmt.Printf("%q : %q\n", ev.Key, ev.Value)
 			// TODO: Remove the tuple from the space is IN is called
-			return zygo.SexpNull, nil
+			return m, nil
 		}
 	}
 	// The tuple does not exists, watch for a new event until a tuple match
@@ -54,6 +59,10 @@ func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 			if match(m, string(ev.Kv.Value)) {
 				fmt.Printf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
 				// TODO: Remove the tuple from the space is IN is called
+				_, err := l.cli.Delete(context.TODO(), string(ev.Kv.Key), clientv3.WithPrefix())
+				if err != nil {
+					return zygo.SexpNull, err
+				}
 				return zygo.SexpNull, nil
 			}
 		}
