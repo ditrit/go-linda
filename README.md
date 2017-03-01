@@ -17,6 +17,8 @@ The purpose is to implement the dinner of the philosopher as described in page 4
 
 the v0.2 is using and embedded language based on Lisp (see here [zygomys](https://github.com/glycerine/zygomys)) and [etcd](https://github.com/coreos/etcd) as tuplespace.
 
+See this [blog post](https://blog.owulveryck.info/2017/02/28/to-go-and-touch-lindas-lisp/index.html) for more details.
+
 ## v0.1
 
 For more information about the v0.1, please refer to this [blog post](https://blog.owulveryck.info/2017/02/03/linda-31yo-with-5-starving-philosophers.../index.html)
