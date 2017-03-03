@@ -23,11 +23,41 @@ See this [blog post](https://blog.owulveryck.info/2017/02/28/to-go-and-touch-lin
 
 For more information about the v0.1, please refer to this [blog post](https://blog.owulveryck.info/2017/02/03/linda-31yo-with-5-starving-philosophers.../index.html)
 
+# About
+
+The executables are composed of two parts.
+
+* One agent that is actually the `zygo/linda` interpreter
+* One injector that injects code to the tuple space (actually etcd)
+
+## The injector
+
+The injector reads a file and injects its content in etcd. The key is a _uuid_ and is returned if the PUT operation succeed. 
+**There is no verification of any sort made on the file before puting it into etcd**
+
+## The agent
+
+The agent takes a _uuid_ as argument.
+Then it tries to get the zygo/lisp file from etcd. If it succeeds, it evaluates the content.
+
 ## Running the example
 
 `go get -v github.com/ditrit/go-linda`
 
-`cd $GOPATH/src/github.com/ditrit/go-linda/cmd && go run *.go ../example/dinner/dinner.zy`
+`cd $GOPATH/src/github.com/ditrit/go-linda/agent && go build`
+`cd $GOPATH/src/github.com/ditrit/go-linda/injector && go build`
+
+Make sure an `etcd` daemon is available and accessible.
+
+Then export the following configuration vaiable to reflect your settings. For example:
+
+`export GLINDA_ETCD_ENDPOINT="localhost:2379"`
+
+Then:
+
+`./agent/agent $(./injector/injector example/dinner/dinner.zy)`
+
+(or use two separates commands)
 
 # Caution
 
