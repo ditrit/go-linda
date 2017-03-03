@@ -1,15 +1,12 @@
 (defn think [i] (begin
                   (printf "%v is thinking\n" i)
-                  (sleep 2000)
-                  (printf "/%v is thinking\n" i)
-                 )
-)
+                  (sleep 10000)
+                  (printf "/%v is thinking\n" i)))
+
 (defn eat [i] (begin
                   (printf "%v is eating\n" i)
                   (sleep 2000)
-                  (printf "/%v is eating\n" i)
-                 )
-)
+                  (printf "/%v is eating\n" i)))
 
 
  (defn phil [i num] (
@@ -28,9 +25,7 @@
                       (out "chopstick" (mod (+ i 1) num))
                       (printf "%v left the room\n" i)
                       (out "room ticket")
-                      (phil i num)
-                     )
-))
+                      (phil i num))))
 
 (def num 5)
   (for [(def i 0) (< i num) (def i (+ 1 i))] 
@@ -43,9 +38,6 @@
      (< i (- num 1)) 
      (begin
       (printf "Creating room ticket\n")
-      (out "room ticket")
-     )
-     null)
-   )
-  )
+      (out "room ticket"))
+     null)))
 
