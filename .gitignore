@@ -24,5 +24,6 @@ _testmain.go
 *.prof
 
 cmd/cmd
-
+agent/agent
+injector/injector
 *default.etcd
