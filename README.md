@@ -33,6 +33,7 @@ The executables are composed of two parts.
 ## The injector
 
 The injector reads a file and injects its content in etcd. The key is a _uuid_ and is returned if the PUT operation succeed. 
+
 **There is no verification of any sort made on the file before puting it into etcd**
 
 ## The agent
@@ -45,6 +46,7 @@ Then it tries to get the zygo/lisp file from etcd. If it succeeds, it evaluates 
 `go get -v github.com/ditrit/go-linda`
 
 `cd $GOPATH/src/github.com/ditrit/go-linda/agent && go build`
+
 `cd $GOPATH/src/github.com/ditrit/go-linda/injector && go build`
 
 Make sure an `etcd` daemon is available and accessible.
