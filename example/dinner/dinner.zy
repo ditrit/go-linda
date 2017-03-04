@@ -33,7 +33,7 @@
     (printf "Creating chopstick %v\n" i)
     (out "chopstick" i)
     (printf "Creating philosopher %v\n" i)
-    (eval phil i num)
+    (evalc phil i num)
     (cond
      (< i (- num 1)) 
      (begin

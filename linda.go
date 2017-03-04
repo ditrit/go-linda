@@ -1,8 +1,9 @@
 package linda
 
 import (
+	"bytes"
 	"context"
-	"fmt"
+	"encoding/gob"
 	"github.com/coreos/etcd/clientv3"
 	zygo "github.com/glycerine/zygomys/repl"
 	"github.com/google/uuid"
@@ -23,6 +24,12 @@ func New(cli *clientv3.Client) *Linda {
 type Linda struct {
 	id  uuid.UUID
 	cli *clientv3.Client
+}
+
+// Message is the structure that will hold the information to pass between workers.
+type Message struct {
+	Env *zygo.Glisp
+	//	Args []zygo.Sexp
 }
 
 // InRd method extracts a tuple from the tuple space. It finds a tuple that "matches" the object passed as a parameter
@@ -46,7 +53,7 @@ func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 			if err != nil {
 				return zygo.SexpNull, err
 			}
-			fmt.Printf("%q : %q\n", ev.Key, ev.Value)
+			//fmt.Printf("%q : %q\n", ev.Key, ev.Value)
 			// TODO: Remove the tuple from the space is IN is called
 			return m, nil
 		}
@@ -57,7 +64,7 @@ func (l *Linda) InRd(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 		for _, ev := range wresp.Events {
 			// TODO: Check if ev.Type is PUT otherwise continue
 			if match(m, string(ev.Kv.Value)) {
-				fmt.Printf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
+				//fmt.Printf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
 				// TODO: Remove the tuple from the space is IN is called
 				_, err := l.cli.Delete(context.TODO(), string(ev.Kv.Key), clientv3.WithPrefix())
 				if err != nil {
@@ -77,6 +84,22 @@ func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, 
 	return zygo.SexpNull, err
 }
 
+// EvalC is evaluating args on another host.
+// It gob-encode the env and PUT it in the tuplespace
+func (l *Linda) EvalC(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
+	var buf bytes.Buffer
+	// Create an encoder and send a value.
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(Message{env.Clone()})
+	if err != nil {
+		log.Println("encode:", err)
+		return zygo.SexpNull, err
+	}
+	// Put the env in the tuplespace
+	_, err = l.cli.Put(context.TODO(), prefix+"-"+"evalc-"+l.id.String()+"-"+uuid.New().String(), buf.String())
+	return zygo.SexpNull, err
+}
+
 // Eval is similar to Out except it launcheS any function in the struct
 // within a goroutine
 // TODO: For now eval is only used as a wrapper to launch a goroutine
@@ -85,7 +108,7 @@ func (l *Linda) Eval(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp,
 	fn := args[0].(*zygo.SexpFunction)
 	go func(env *zygo.Glisp, fn *zygo.SexpFunction, args []zygo.Sexp) error {
 		//_, err := env.Apply(fn, args[:]) // Put the result in the tuplespace
-		expr, err := env.Apply(fn, args[:]) // Put the result in the tuplespace
+		expr, err := env.Apply(fn, args[:]) // Put the result n the tuplespace
 		if err != nil {
 			// TODO
 			log.Println(err)
