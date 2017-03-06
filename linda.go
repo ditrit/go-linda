@@ -1,9 +1,7 @@
 package linda
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
 	"github.com/coreos/etcd/clientv3"
 	zygo "github.com/glycerine/zygomys/repl"
 	"github.com/google/uuid"
@@ -87,16 +85,10 @@ func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, 
 // EvalC is evaluating args on another host.
 // It gob-encode the env and PUT it in the tuplespace
 func (l *Linda) EvalC(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
-	var buf bytes.Buffer
-	// Create an encoder and send a value.
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(Message{env.Clone()})
-	if err != nil {
-		log.Println("encode:", err)
-		return zygo.SexpNull, err
-	}
 	// Put the env in the tuplespace
-	_, err = l.cli.Put(context.TODO(), prefix+"-"+"evalc-"+l.id.String()+"-"+uuid.New().String(), buf.String())
+	json := zygo.SexpToJson(&zygo.SexpArray{Val: args})
+	log.Println("EvalC:", json)
+	_, err := l.cli.Put(context.TODO(), prefix+"-"+"evalc-", string(json))
 	return zygo.SexpNull, err
 }
 
