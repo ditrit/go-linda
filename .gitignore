@@ -27,3 +27,4 @@ cmd/cmd
 agent/agent
 injector/injector
 *default.etcd
+worker/worker
