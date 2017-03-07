@@ -1,7 +1,9 @@
 package linda
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"github.com/coreos/etcd/clientv3"
 	zygo "github.com/glycerine/zygomys/repl"
 	"github.com/google/uuid"
@@ -86,9 +88,16 @@ func (l *Linda) Out(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, 
 // It gob-encode the env and PUT it in the tuplespace
 func (l *Linda) EvalC(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
 	// Put the env in the tuplespace
-	json := zygo.SexpToJson(&zygo.SexpArray{Val: args})
-	log.Println("EvalC:", json)
-	_, err := l.cli.Put(context.TODO(), prefix+"-"+"evalc-", string(json))
+	var msg []string
+	for _, s := range args {
+		msg = append(msg, zygo.SexpToJson(s))
+
+	}
+	var network bytes.Buffer        // Stand-in for a network connection
+	enc := gob.NewEncoder(&network) // Will write to network.
+	enc.Encode(msg)
+
+	_, err := l.cli.Put(context.TODO(), prefix+"-"+"evalc-", network.String())
 	return zygo.SexpNull, err
 }
 

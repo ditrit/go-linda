@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/ditrit/go-linda"
 	zygo "github.com/glycerine/zygomys/repl"
@@ -88,15 +90,18 @@ func main() {
 			log.Fatal("Cannot get lisp code from the tuple space (etcd)", err)
 		}
 		if len(resp.Kvs) != 1 {
-			log.Fatalf("Found %v lisp code in the tuple space mtching ID %v", len(resp.Kvs), os.Args[1])
+			log.Fatalf("Found %v lisp code in the tuple space mtching ID %v", len(resp.Kvs), s.WorkID)
 		}
 		var lisp []byte
 		for _, ev := range resp.Kvs {
 			lisp = ev.Value
-			//fmt.Printf("%s : %s\n", ev.Key, ev.Value)
 		}
 		//env.SourceFile(f)
-		env.LoadString(string(lisp))
+		log.Println("Got LISP")
+		err = env.LoadString(string(lisp))
+		if err != nil {
+			log.Fatal("Cannot load lisp", err)
+		}
 		// The tuple does not exists, watch for a new event until a tuple match
 		rch := cli.Watch(context.Background(), "LINDA-evalc-", clientv3.WithPrefix())
 		for wresp := range rch {
@@ -113,9 +118,19 @@ func main() {
 						continue
 					}
 					// Try to decode the message
+					var network = bytes.NewBuffer(ev.Kv.Value)
+					dec := gob.NewDecoder(network) // Will read from network.
+					var msg []string
+					var args []zygo.Sexp
+					dec.Decode(&msg)
+					for _, m := range msg {
+						log.Println(m)
+						s, _ := zygo.JsonToSexp([]byte(m), env)
+						args = append(args, s)
+					}
+
 					log.Println(string(ev.Kv.Value))
-					sexp, err := zygo.JsonToSexp(ev.Kv.Value, env)
-					_, err = lda.Eval(env, "eval", sexp)
+					_, err = lda.Eval(env, "eval", args)
 					if err != nil {
 						log.Println(err)
 					}
