@@ -123,13 +123,26 @@ func main() {
 					var msg []string
 					var args []zygo.Sexp
 					dec.Decode(&msg)
+					parser := env.NewParser()
 					for _, m := range msg {
 						log.Println(m)
-						s, _ := zygo.JsonToSexp([]byte(m), env)
-						args = append(args, s)
+						// TODO: fine check the error but by now assume it is because it is a SexpFunc
+						buf := bytes.NewBufferString(m)
+						parser.NewInput(buf)
+						ss, err := parser.ParseTokens()
+
+						log.Println("SS:", ss)
+						if err != nil {
+							log.Println(err)
+							s, _ := zygo.JsonToSexp([]byte(m), env)
+							args = append(args, s)
+						} else {
+							args = append(args, ss...)
+						}
 					}
 
-					log.Println(string(ev.Kv.Value))
+					log.Println("HERE", string(ev.Kv.Value))
+					log.Println(args)
 					_, err = lda.Eval(env, "eval", args)
 					if err != nil {
 						log.Println(err)
