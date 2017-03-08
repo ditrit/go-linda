@@ -97,7 +97,7 @@ func (l *Linda) EvalC(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp
 	enc := gob.NewEncoder(&network) // Will write to network.
 	enc.Encode(msg)
 
-	_, err := l.cli.Put(context.TODO(), prefix+"-"+"evalc-", network.String())
+	_, err := l.cli.Put(context.TODO(), prefix+"-"+"evalc-"+uuid.New().String(), network.String())
 	return zygo.SexpNull, err
 }
 

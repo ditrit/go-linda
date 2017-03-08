@@ -7,12 +7,13 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/ditrit/go-linda"
 	zygo "github.com/glycerine/zygomys/repl"
-	"github.com/google/uuid"
+	//"github.com/google/uuid"
 	"github.com/kelseyhightower/envconfig"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
+	"regexp"
 	"time"
 )
 
@@ -29,7 +30,7 @@ func sleep(env *zygo.Glisp, name string, args []zygo.Sexp) (zygo.Sexp, error) {
 }
 
 func main() {
-	me := uuid.New()
+	//me := uuid.New()
 	var s configuration
 	err := envconfig.Process("glinda", &s)
 	if err != nil {
@@ -107,47 +108,46 @@ func main() {
 		for wresp := range rch {
 			for _, ev := range wresp.Events {
 				// Check if the evalc is anonymous or for me...
-				if string(ev.Kv.Key) == "LINDA-evalc-" || string(ev.Kv.Key) == "LINDA-evalc-"+me.String() {
+				//if string(ev.Kv.Key) == "LINDA-evalc-" || string(ev.Kv.Key) == "LINDA-evalc-"+me.String() {
 
-					// TODO: Check if ev.Type is PUT otherwise continue
-					//fmt.Printf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
-					// TODO: Remove the tuple from the space is IN is called
-					_, err := cli.Delete(context.TODO(), string(ev.Kv.Key), clientv3.WithPrefix())
-					if err != nil {
-						log.Println(err)
-						continue
-					}
-					// Try to decode the message
-					var network = bytes.NewBuffer(ev.Kv.Value)
-					dec := gob.NewDecoder(network) // Will read from network.
-					var msg []string
-					var args []zygo.Sexp
-					dec.Decode(&msg)
-					parser := env.NewParser()
-					for _, m := range msg {
-						log.Println(m)
+				// TODO: Check if ev.Type is PUT otherwise continue
+				if ev.Type.String() != "PUT" {
+					continue
+				}
+				//fmt.Printf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
+				// TODO: Remove the tuple from the space is IN is called
+				dresp, err := cli.Delete(context.TODO(), string(ev.Kv.Key), clientv3.WithPrefix())
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				log.Printf("Deleted: %v (%v)", dresp, dresp.Deleted)
+				if dresp.Deleted == 0 {
+					continue
+				}
+				// Try to decode the message
+				var network = bytes.NewBuffer(ev.Kv.Value)
+				dec := gob.NewDecoder(network) // Will read from network.
+				var msg []string
+				dec.Decode(&msg)
+				var funct string
+				// Ugly hack! get the name of the function to execute
+				re := regexp.MustCompile("defn ([^ ]+) ")
+				var def string
+				for _, m := range msg {
+					//log.Println("Got event:", m)
+					out := re.FindStringSubmatch(m)
+					if len(out) == 2 {
+						def = m
+						funct = out[1]
 						// TODO: fine check the error but by now assume it is because it is a SexpFunc
-						buf := bytes.NewBufferString(m)
-						parser.NewInput(buf)
-						ss, err := parser.ParseTokens()
-
-						log.Println("SS:", ss)
-						if err != nil {
-							log.Println(err)
-							s, _ := zygo.JsonToSexp([]byte(m), env)
-							args = append(args, s)
-						} else {
-							args = append(args, ss...)
-						}
-					}
-
-					log.Println("HERE", string(ev.Kv.Value))
-					log.Println(args)
-					_, err = lda.Eval(env, "eval", args)
-					if err != nil {
-						log.Println(err)
+					} else {
+						funct = funct + " " + m
 					}
 				}
+				log.Println(def + "(" + funct + ")")
+				env.EvalString(def + "(" + funct + ")")
+				//}
 			}
 		}
 	}

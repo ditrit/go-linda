@@ -11,14 +11,20 @@
 
  (defn phil [i num] (
                      (begin
-                      (think i)
+                      (begin
+                       (printf "%v is thinking\n" i)
+                       (sleep 10000)
+                       (printf "/%v is thinking\n" i))
                       (in "room ticket")
                       (printf "%v is in the room\n" i)
                       (in "chopstick" i)
                       (printf "%v took the %v's chopstick\n" i i)
                       (in "chopstick" (mod (+ i 1) num))
                       (printf "%v took the %v's chopstick\n" i (mod (+ i 1) num))
-                      (eat i)
+                      (begin
+                       (printf "%v is eating\n" i)
+                       (sleep 10000)
+                       (printf "/%v is eating\n" i))
                       (printf "%v released the %v's chopstick\n" i i)
                       (out "chopstick" i)
                       (printf "%v released the %v's chopstick\n" i (mod (+ i 1) num))
