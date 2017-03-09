@@ -21,6 +21,8 @@ the v0.3 introduces a new primitive: **evalc**.
 
 More documentation will follow.
 
+![screenshot](https://github.com/ditrit/go-linda/raw/master/doc/v0.3.png)
+
 ## v0.2
 
 the v0.2 is using and embedded language based on Lisp (see here [zygomys](https://github.com/glycerine/zygomys)) and [etcd](https://github.com/coreos/etcd) as tuplespace.
