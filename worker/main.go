@@ -9,7 +9,6 @@ import (
 	zygo "github.com/glycerine/zygomys/repl"
 	//"github.com/google/uuid"
 	"github.com/kelseyhightower/envconfig"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -58,16 +57,6 @@ func main() {
 	// We are the main process
 	if len(os.Args) > 1 {
 		// Put the file in the tuple space
-		lisp, err := ioutil.ReadFile(os.Args[1])
-		if err != nil {
-			log.Fatal("Cannot read zygo file: ", err)
-		} // Putting the content of the lisp file in the tuple space
-		ctx, cancel := context.WithTimeout(context.Background(), s.Timeout)
-		_, err = cli.Put(ctx, s.WorkID, string(lisp))
-		cancel()
-		if err != nil {
-			log.Fatal(err)
-		}
 
 		f, err := os.Open(os.Args[1])
 		if err != nil {
@@ -83,26 +72,6 @@ func main() {
 	} else {
 		// We are an "agent"
 
-		// Getting the lisp source from ETCD
-		ctx, cancel := context.WithTimeout(context.Background(), s.Timeout)
-		resp, err := cli.Get(ctx, s.WorkID)
-		cancel()
-		if err != nil {
-			log.Fatal("Cannot get lisp code from the tuple space (etcd)", err)
-		}
-		if len(resp.Kvs) != 1 {
-			log.Fatalf("Found %v lisp code in the tuple space mtching ID %v", len(resp.Kvs), s.WorkID)
-		}
-		var lisp []byte
-		for _, ev := range resp.Kvs {
-			lisp = ev.Value
-		}
-		//env.SourceFile(f)
-		log.Println("Got LISP")
-		err = env.LoadString(string(lisp))
-		if err != nil {
-			log.Fatal("Cannot load lisp", err)
-		}
 		// The tuple does not exists, watch for a new event until a tuple match
 		rch := cli.Watch(context.Background(), "LINDA-evalc-", clientv3.WithPrefix())
 		for wresp := range rch {
@@ -111,19 +80,20 @@ func main() {
 				//if string(ev.Kv.Key) == "LINDA-evalc-" || string(ev.Kv.Key) == "LINDA-evalc-"+me.String() {
 
 				// TODO: Check if ev.Type is PUT otherwise continue
+				log.Printf("Event: %v: %v / %v", ev.Type.String(), string(ev.Kv.Key), string(ev.Kv.Value))
 				if ev.Type.String() != "PUT" {
-					continue
+					break
 				}
 				//fmt.Printf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
 				// TODO: Remove the tuple from the space is IN is called
 				dresp, err := cli.Delete(context.TODO(), string(ev.Kv.Key), clientv3.WithPrefix())
 				if err != nil {
 					log.Println(err)
-					continue
+					break
 				}
 				log.Printf("Deleted: %v (%v)", dresp, dresp.Deleted)
 				if dresp.Deleted == 0 {
-					continue
+					break
 				}
 				// Try to decode the message
 				var network = bytes.NewBuffer(ev.Kv.Value)
