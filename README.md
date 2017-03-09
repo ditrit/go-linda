@@ -13,6 +13,14 @@ The purpose is to implement the dinner of the philosopher as described in page 4
 
 # Versions
 
+## v0.3
+
+the v0.3 introduces a new primitive: **evalc**.
+
+**evalc** works like **eval** but insted of triggering a new goroutine, it post an event in etcd that is captured by another agent.
+
+More documentation will follow.
+
 ## v0.2
 
 the v0.2 is using and embedded language based on Lisp (see here [zygomys](https://github.com/glycerine/zygomys)) and [etcd](https://github.com/coreos/etcd) as tuplespace.
