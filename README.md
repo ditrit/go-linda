@@ -53,9 +53,7 @@ Then it tries to get the zygo/lisp file from etcd. If it succeeds, it evaluates 
 
 `go get -v github.com/ditrit/go-linda`
 
-`cd $GOPATH/src/github.com/ditrit/go-linda/agent && go build`
-
-`cd $GOPATH/src/github.com/ditrit/go-linda/injector && go build`
+`cd $GOPATH/src/github.com/ditrit/go-linda/worker && go build`
 
 Make sure an `etcd` daemon is available and accessible.
 
@@ -64,8 +62,14 @@ Then export the following configuration vaiable to reflect your settings. For ex
 `export GLINDA_ETCD_ENDPOINT="localhost:2379"`
 
 Then:
+ 
+launch 5 workers (one per philosopher):
 
-`./agent/agent $(./injector/injector example/dinner/dinner.zy)`
+`./worker/worker`
+
+and launch the main routine:
+
+`./worker/worker ./example/dinner/dinner.zy`
 
 (or use two separates commands)
 
