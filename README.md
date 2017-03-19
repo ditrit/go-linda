@@ -19,7 +19,7 @@ the v0.3 introduces a new primitive: **evalc**.
 
 **evalc** works like **eval** but insted of triggering a new goroutine, it post an event in etcd that is captured by another agent.
 
-More documentation will follow.
+Get a description [here](https://blog.owulveryck.info/2017/03/13/lindas-evalc-a-tuplespace-oddity/index.html)
 
 ![screenshot](https://github.com/ditrit/go-linda/raw/master/doc/v0.3.png)
 
